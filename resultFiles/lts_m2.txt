@@ -1,0 +1,29 @@
+digraph functionG {
+0 [label="0,#,#,#"];
+1 [label="1,#,#,#"];
+2 [label="2,#,1,#"];
+3 [label="3,#,1,10"];
+4 [label="4,1,1,10"];
+5 [label="5,1,1,10"];
+6 [label="7,1,1,10"];
+7 [label="8,1,0,10"];
+8 [label="9,1,0,7"];
+9 [label="10,1,6,7"];
+10 [label="11,1,6,7"];
+11 [label="12,1,6,7"];
+12 [label="18,1,6,7"];
+
+0 -> 1 [label="int x, y" color="blue"];
+1 -> 2 [label="x=1;" color="blue"];
+2 -> 3 [label="y=10;" color="blue"];
+3 -> 4 [label="h=1;" color="blue"];
+4 -> 5 [label="(x<10)" color="blue"];
+5 -> 6 [label="!(h>y)" color="blue"];
+6 -> 7 [label="x=0;" color="blue"];
+7 -> 8 [label="y=7;" color="blue"];
+8 -> 9 [label="x=6;" color="blue"];
+9 -> 10 [label="(x<9)" color="blue"];
+10 -> 11 [label="(h>0)" color="blue"];
+11 -> 12 [label="break;" color="blue"];
+12 -> 12 [label="END" color="blue"];
+}
