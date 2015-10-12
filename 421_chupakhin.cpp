@@ -5,6 +5,11 @@
  * поток вывода количество достижимых состояний.
 */
 
+/*
+ * FUNCTION F -> RED COLOR
+ * FUNCTION G -> BLUE COLOR
+ */
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -76,7 +81,7 @@ public:
         int fIp = c_f;
         int gIp = c_g;
 
-        //Print without convertion
+        //Print with convertion
         if ( c_f == 6 || c_f == 7 )
             fIp +=1;
         if ( c_f == 8 )
@@ -140,6 +145,56 @@ public:
         c_g = right.c_g;
         return *this;
     }
+
+    void printDOT( std::ofstream & out) {
+        int fIp = c_f;
+        int gIp = c_g;
+
+        //Print with convertion
+        if ( c_f == 6 || c_f == 7 )
+            fIp +=1;
+        if ( c_f == 8 )
+            fIp = 12;
+
+        if ( c_g >= 6 && c_g <= 11 )
+            gIp +=1;
+
+        if ( c_g == 12 )
+            gIp = 18;
+
+
+        out << "[label=\"" <<
+        fIp << "," <<
+        gIp << ",";
+
+        if (init[0])
+            out << h << ",";
+        else
+            out << "#" << ",";
+
+        if (init[1])
+            out << f_x << ",";
+        else
+            out << "#" << ",";
+
+        if (init[2])
+            out << f_y << ",";
+        else
+            out << "#" << ",";
+
+        if (init[3])
+            out << g_x << ",";
+        else
+            out << "#" << ",";
+
+        if (init[4])
+            out << g_y;
+        else
+            out << "#";
+
+        out << "\"];" << std::endl;
+    }
+
 };
 
 class Action {
@@ -155,8 +210,12 @@ public:
 
     ~Action() {};
 
-    void print() {
-
+    void printDOT( std::ofstream & out) {
+        std::string color = std::string("blue");
+        if ( nextState.c_f > currState.c_f )
+            color = std::string("red");
+        out << curr << " -> " << next << "[label=\"" << operation << " " <<
+        "color=\"" << color << "\"];" << std::endl;
     }
 
     bool operator==( const Action & right ) {
@@ -560,6 +619,27 @@ int printStates(std::vector<State> & states) {
 
 int printLTS(std::vector<State> & states, std::vector<Action> & actions ) {
 
+    std::ofstream fout;
+    fout.open(filenameLTS, std::ios_base::out |  std::ios_base::trunc);
+    if ( !fout.is_open() ) {
+        std::cout << "Error in opening file for LTS" << std::endl;
+        return 0;
+    }
+
+    fout << "digraph LTS {" << std::endl;
+
+    for ( uint i = 0; i < states.size(); i++ ) {
+        fout << i << " ";
+        states[i].printDOT(fout);
+    }
+
+    for ( uint i = 0; i < actions.size(); i++ ) {
+        actions[i].printDOT(fout);
+    }
+
+    fout << "}" << std::endl;
+
+    fout.close();
 
     return 1;
 }
