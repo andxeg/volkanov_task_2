@@ -129,6 +129,44 @@ public:
                 ( ( this->init[4] == right.init[4] ) && ( this->g_y == right.g_y ) );
 
     }
+
+    State & operator=(const State & right ) {
+        f_x = right.f_x;
+        f_y = right.f_y;
+        g_x = right.g_x;
+        g_y = right.g_y;
+        h = right.h;
+        c_f = right.c_f;
+        c_g = right.c_g;
+        return *this;
+    }
+};
+
+class Action {
+public:
+    State currState;
+    State nextState;
+    int curr;
+    int next;
+    std::string operation;
+    Action() :
+            currState(), nextState(), curr(0), next(0), operation()
+    {};
+
+    ~Action() {};
+
+    void print() {
+
+    }
+
+    bool operator==( const Action & right ) {
+        return ( currState == right.currState &&
+                nextState == right.nextState &&
+                curr == right.curr &&
+                next == right.next &&
+                operation == right.operation );
+    }
+
 };
 
 class Procedure {
@@ -142,67 +180,100 @@ class F: public Procedure {
 public:
     F():Procedure() {}
     ~F() {}
-    int execute(State & curr_state, const int & currComm) const {
+    int execute(State & curr_state, const int & currComm, Action & action, int curr) const {
         //execute operation in ip -> change State and change ip
         // curr_state -> execute command -> new_state and new value in ip
         // if currComm < ip therefore not implement string
         if ( curr_state.c_f > currComm )
             return 0;
 
+        //Set current State in action
+        action.currState = curr_state;
+        action.curr = curr;//number of state in vector with states <=> states[curr] == curr_state
+
         //std::cout << "F::";
         //else only one the rest variant: currComm == ip  => implement string
         switch (curr_state.c_f) {
             case  0:
                 //std::cout << "int x, y" << std::endl;
+                action.operation = std::string("int x, y;");
                 curr_state.c_f = 1;
+                action.nextState = curr_state;
                 break;
 
             case  1:
                 //std::cout << "x = 7" << std::endl;
+                action.operation = std::string("x = 7;");
                 curr_state.f_x = 7;
                 curr_state.init[1] = 1;
                 curr_state.c_f = 2;
+                action.nextState = curr_state;
                 break;
 
             case  2:
                 //std::cout << "y = 7" << std::endl;
+                action.operation = std::string("y = 7;");
                 curr_state.f_y = 7;
                 curr_state.init[2] = 1;
                 curr_state.c_f = 3;
+                action.nextState = curr_state;
                 break;
 
             case  3:
                 //std::cout << "h = 4" << std::endl;
+                action.operation = std::string("h = 4;");
                 curr_state.h = 4;
                 curr_state.init[0] = 1;
                 curr_state.c_f = 4;
+                action.nextState = curr_state;
                 break;
 
             case  4:
                 //std::cout << "if ( h < b )" << std::endl;
-                ( curr_state.h < f_b) ? curr_state.c_f = 5 : curr_state.c_f = 7;
+                //( curr_state.h < f_b) ? curr_state.c_f = 5 : curr_state.c_f = 7;
+
+                if ( curr_state.h < f_b) {
+                    action.operation = std::string("( h < b )");
+                    curr_state.c_f = 5;
+                    action.nextState = curr_state;
+                } else {
+                    action.operation = std::string("!( h < b )");
+                    curr_state.c_f = 7;
+                    action.nextState = curr_state;
+                }
+
                 break;
 
             case  5:
-                //if ( h > 6 )  in all cases TRUE
+                //if ( h > 6 )  in all cases FALSE
                 //std::cout << "if ( h > 6 )" << std::endl;
+                action.operation = std::string("!( h > 6 )");
                 curr_state.c_f = 6;
+                action.nextState = curr_state;
                 break;
 
             case  6:
                 //std::cout << "x = 2" << std::endl;
+                action.operation = std::string("x = 2;");
                 curr_state.f_x = 2;
                 curr_state.init[1] = 1;
                 curr_state.c_f = 7;
+                action.nextState = curr_state;
                 break;
 
             case  7:
                 //std::cout << "if ( h > y )" << std::endl;
+                action.operation = std::string("!( h > y )");
                 curr_state.c_f = 8;
+                action.nextState = curr_state;
                 break;
 
             case  8:
                 //end of the procedure
+                //Infinite loop in last state
+                action.operation = std::string("END");
+                action.nextState = curr_state;
+                action.next = curr;
                 break;
 
             default:
@@ -218,91 +289,141 @@ class G: public Procedure {
 public:
     G():Procedure() {}
     ~G() {}
-    int execute(State & curr_state, const int & currComm) const {
+    int execute(State & curr_state, const int & currComm, Action & action, int curr) const {
         if ( curr_state.c_g > currComm )
             return 0;
+
+        //Set current State in action
+        action.currState = curr_state;
+        action.curr = curr;//index of state in vector with states <=> states[curr] == curr_state
 
         //std::cout << "G::";
         //else only one the rest variant: currComm == ip  => implement string
         switch (curr_state.c_g) {
             case  0:
                 //std::cout << "int x, y;" << std::endl;
+                action.operation = std::string("int x, y");
                 curr_state.c_g = 1;
+                action.nextState = curr_state;
                 break;
 
             case  1:
                 //std::cout << "x = 1;" << std::endl;
+                action.operation = std::string("x = 1;");
                 curr_state.g_x = 1;
                 curr_state.init[3] = 1;
                 curr_state.c_g = 2;
+                action.nextState = curr_state;
                 break;
 
             case  2:
                 //std::cout << "y = 10" << std::endl;
+                action.operation = std::string("y = 10;");
                 curr_state.g_y = 10;
                 curr_state.init[4] = 1;
                 curr_state.c_g = 3;
+                action.nextState = curr_state;
                 break;
 
             case  3:
                 //std::cout << "h = 1" << std::endl;
+                action.operation = std::string("h = 1;");
                 curr_state.h = 1;
                 curr_state.init[0] = 1;
                 curr_state.c_g = 4;
+                action.nextState = curr_state;
                 break;
 
             case  4:
                 //if ( x < 10 ) in all cases TRUE can write only curr_state.c_g = 5
                 //std::cout << "if ( x < 10 )" << std::endl;
-                ( curr_state.g_x < 10 ) ? curr_state.c_g = 5 : curr_state.c_g = 7;
+                //( curr_state.g_x < 10 ) ? curr_state.c_g = 5 : curr_state.c_g = 7;
+
+                if ( curr_state.g_x < 10 ) {
+                    action.operation = std::string("( x < 10 )");
+                    curr_state.c_g = 5;
+                    action.nextState = curr_state;
+                } else {
+                    action.operation = std::string("!( x < 10 )");
+                    curr_state.c_g = 7;
+                    action.nextState = curr_state;
+                }
+
                 break;
 
             case  5:
                 //if ( h > y ) in all cases FALSE can write only curr_state.c_g = 6
                 //std::cout << "if ( h > y )" << std::endl;
+                action.operation = std::string("!( h > y )");
                 curr_state.c_g = 6;
+                action.nextState = curr_state;
                 break;
 
             case  6:
                 //std::cout << "x = 0" << std::endl;
+                action.operation = std::string("x = 0;");
                 curr_state.g_x = 0;
                 curr_state.init[3] = 1;
                 curr_state.c_g = 7;
+                action.nextState = curr_state;
                 break;
 
             case  7:
                 //std::cout << "y = 7" << std::endl;
+                action.operation = std::string("y = 7;");
                 curr_state.g_y = 7;
                 curr_state.init[4] = 1;
                 curr_state.c_g = 8;
+                action.nextState = curr_state;
                 break;
 
             case  8:
                 //std::cout << "x = 6" << std::endl;
+                action.operation = std::string("x = 6;");
                 curr_state.g_x = 6;
                 curr_state.init[3] = 1;
                 curr_state.c_g = 9;
+                action.nextState = curr_state;
                 break;
 
             case  9:
                 //while ( x < 9 ) in all cases TRUE can write only curr_state.c_g = 10
                 //std::cout << "while ( x < 9 )" << std::endl;
-                ( curr_state.g_x < 9 ) ? curr_state.c_g = 10 : curr_state.c_g = 12;
+                //( curr_state.g_x < 9 ) ? curr_state.c_g = 10 : curr_state.c_g = 12;
+
+                if ( curr_state.g_x < 9 ) {
+                    action.operation = std::string("( x < 9 )");
+                    curr_state.c_g = 10;
+                    action.nextState = curr_state;
+                } else {
+                    action.operation = std::string("!( x < 9 )");
+                    curr_state.c_g = 12;
+                    action.nextState = curr_state;
+                }
+
                 break;
 
             case  10:
                 //if ( h > 0 ) in all cases TRUE
                 //std::cout << "if ( h > 0 )" << std::endl;
+                action.operation = std::string("( h > 0 )");
                 curr_state.c_g = 11;
+                action.nextState = curr_state;
                 break;
 
             case  11:
                 //std::cout << "break" << std::endl;
+                action.operation = std::string("break;");
                 curr_state.c_g = 12;
+                action.nextState = curr_state;
                 break;
 
             case  12:
                 //end of the procedure
+                //Infinite loop in last state
+                action.operation = std::string("END");
+                action.nextState = curr_state;
+                action.next = curr;
                 break;
 
             default:
@@ -314,21 +435,55 @@ public:
     }
 };
 
-void addState(std::vector<State> & states, const State & state) {
-    uint size = states.size();
+void addStateAndAction(std::vector<State> & states, const State & state, std::vector<Action> & actions, Action & action) {
+    uint size;
+    int index = 0;
     int flag = 0;
+
+    //CHECK STATE
+    size = states.size();
     for ( uint i = 0; i < size; i++ ) {
         if ( states[i] == state ) {
+            index = i;
+            flag = 1;
+            break;
+        }
+    }
+
+    if ( !flag ) {
+        states.push_back(state);
+        index = size;
+    }
+    //
+
+    action.next = index;
+
+    //CHECK ACTION
+    size = actions.size();
+    for ( uint i = 0; i < size; i++ ) {
+        if ( actions[i] == action ) {
             flag = 1;
             break;
         }
     }
 
     if ( !flag )
-        states.push_back(state);
+        actions.push_back(action);
+    //
+
 }
 
-void implementTrace(const uint & trace, std::vector<State> & states) {
+int stateIndex( std::vector<State> & states, State & state ) {
+    int result = 0;
+    for ( uint i = 0; i < states.size(); i++) {
+        if ( states[i] == state )
+            result = i;
+            break;
+    }
+    return result;
+}
+
+void implementTrace(const uint & trace, std::vector<State> & states, std::vector<Action> & actions) {
     //Passing nulles and ones while implement trace
     //max one_count  == gLines
     //max null_count  == fLines
@@ -341,7 +496,8 @@ void implementTrace(const uint & trace, std::vector<State> & states) {
     //
     //Init state. All variables have unknown values. Only c_f == 0 and c_g == 0
     State state;
-    addState(states, state);
+    Action action;
+    states.push_back(state);//add first initial state
     //
     while ( (one_count + null_count) < int(fLines + gLines) ) {
         //std::cout << one_count << " " << null_count << " " << int(fLines + gLines) << std::endl;
@@ -351,13 +507,16 @@ void implementTrace(const uint & trace, std::vector<State> & states) {
         //if bit == 1 then g.execute
         //print new state in execute method if string was implemented
         //make shift on (one_count + null_count) and take first bit
+
+        int currStateIndex = stateIndex(states, state);
+
         if ( (trace >> (one_count + null_count)) & 1 ){
-            if ( g.execute(state, one_count) ) // {5}
-                addState(states, state);
+            if ( g.execute(state, one_count, action, currStateIndex) ) // {5}
+                addStateAndAction(states, state, actions, action);
             one_count += 1;
         } else {
-            if ( f.execute(state, null_count) ) // {6}
-                addState(states, state);
+            if ( f.execute(state, null_count, action, currStateIndex) ) // {6}
+                addStateAndAction(states, state, actions, action);
             null_count += 1;
         }
     }
@@ -398,6 +557,13 @@ int printStates(std::vector<State> & states) {
 
     return 1;
 }
+
+int printLTS(std::vector<State> & states, std::vector<Action> & actions ) {
+
+
+    return 1;
+}
+
 
 int strToInt( const char * number, int & result ) {
     char* end_ptr;
@@ -510,15 +676,22 @@ int main( int argc, char **argv ) {
 
     initPathes();
     std::vector<State> states;
+    std::vector<Action> actions;
     //
     for ( uint trace = START_PATH; trace <= /*END_PATH_NEW*/END_PATH; trace++ ) {
         if ( !correctTrace(trace) )
             continue;
         //printTrace( trace );
-        implementTrace(trace, states); // {2}
+        implementTrace(trace, states, actions); // {2}
     }
 
     if ( !printStates(states) )
+        return 1;
+
+    if ( !lts )
+        return 0;
+
+    if ( !printLTS(states, actions) )
         return 1;
 
     //
