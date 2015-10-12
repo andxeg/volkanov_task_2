@@ -515,6 +515,12 @@ void addStateAndAction(std::vector<State> & states, const State & state, std::ve
     }
     //
 
+    //If lts flag is not exist then not work with action
+    if ( !lts )
+        return;
+    //
+
+
     action.next = index;
 
     //CHECK ACTION
