@@ -21,8 +21,11 @@
 //Implementation of the program is represented by the binary vector
 //Weight of the vector is a constant. Weight == gLines
 std::string filename("states.txt");
+std::string filenameLTS;
 int f_a, f_b, g_a, g_b;
 int count = 0;
+int lts = 0;
+int file = 0;
 uint START_PATH;// 0000000001111111111111
 uint END_PATH;  // 1111111111111000000000
 //
@@ -413,11 +416,41 @@ int strToInt( const char * number, int & result ) {
     return 1;
 }
 
+bool checkFlag(const char * flag, char ** argv, int argc, int & position) {
+    bool exist = false;
+
+
+    for (int i = 0; i < argc; i++) {
+        if ( strcmp(argv[i], flag) != 0 )
+            continue;
+
+        //flag exist => check three variants
+        if ( strcmp("-count\0", flag) == 0 ) { //check one-stand flag
+            exist = true;
+            std::cout << "-count exist" << std::endl;
+            break;
+        } else if ( ( strcmp("-file\0", flag) == 0 ) && ( i < ( argc - 1 ) ) ) { //check -file flag after this flag must stand <filename>
+            position = i;
+            exist = true;
+            std::cout << "-file exist" << std::endl;
+            break;
+        } else if ( ( strcmp("-lts\0", flag) == 0 ) && ( i < ( argc - 1 ) ) ) { //check -lts flag after this flag must stand <filename>
+            position = i;
+            exist = true;
+            std::cout << "-lts exist" << std::endl;
+            break;
+        }
+
+    }
+
+    return exist;
+}
+
 int parserInputParameters( int argc, char ** argv ) {
     int a,b,c,d;
-    if (argc < 5 || argc > 8)
+    if (argc < 5 || argc > 10)
         return 0;
-    //argc = {5,6,7,8}
+    //argc = {6,7,8,9,10}
     //Check input parameters for procedure f and g
     if ( !strToInt(argv[1], a ) )
         return 0;
@@ -432,56 +465,28 @@ int parserInputParameters( int argc, char ** argv ) {
     f_b = b;
     g_a = c;
     g_b = d;
+
+    //New parser
+    int position;
+    if ( checkFlag("-count\0", argv, argc, position) )
+        count = 1;
+
+    if ( checkFlag("-file\0", argv, argc, position) ) {
+        file = 2;
+        filename = std::string(argv[position+1]);
+    }
+
+    if ( checkFlag("-lts\0", argv, argc, position) ) {
+        lts = 2;
+        filenameLTS = std::string(argv[position+1]);
+    }
+
+    if ( argc != ( count + file + lts + 5 ) ) {
+        std::cout << "error in number argument" << std::endl;
+        return 0;
+    }
+
     //
-
-    //Check other input parameters
-    // Four variants:
-    // [-file <filename>] second [-count]
-    // second [-count] [-file <filename>]
-    // [-file <filename>]
-    // [-count]
-    if ( argc == 6 ) {
-        if ( strcmp(argv[5],"-count\0") == 0 ) {
-            count = 1;
-            std::cout << "-count parameter successful read" << std::endl;
-            return 1;
-        } else {
-            std::cout << "Error in the 5-th parameter" << std::endl;
-            return 0;
-        }
-    }
-
-    if ( argc == 7 ) {
-        if ( ( strcmp(argv[5],"-file\0") == 0 ) && ( strcmp(argv[6],"-count\0") != 0) ) {
-            filename = std::string(argv[6]);
-            std::cout << "-filename parameter successful read" << std::endl;
-            return 1;
-        } else {
-            std::cout << "Error in the 5-th and 6-th parameters" << std::endl;
-            return 0;
-        }
-    }
-
-    if ( argc == 8 ) {
-        if ( ( strcmp(argv[5],"-file\0") == 0 ) && ( strcmp(argv[6],"-count\0") != 0 ) && ( strcmp(argv[7],"-count\0") == 0 ) ) {
-            std::cout << "-filename parameter successful read" << std::endl;
-            std::cout << "-count parameter successful read" << std::endl;
-            filename = std::string(argv[6]);
-            count = 1;
-            return 1;
-        } else if ( ( strcmp(argv[5],"-count\0") == 0 ) && ( strcmp(argv[6],"-file\0") == 0 ) && ( strcmp(argv[7],"-count\0") != 0 ) ) {
-            std::cout << "-filename parameter successful read" << std::endl;
-            std::cout << "-count parameter successful read" << std::endl;
-            filename = std::string(argv[7]);
-            count = 1;
-            return 1;
-        } else {
-            std::cout << "Error in the 5-th, 6-th, 7-th parameters" << std::endl;
-            return 0;
-        }
-    }
-    //
-    //std::cout << "End of parserInputParameters" << std::endl;
     return 1;
 }
 
