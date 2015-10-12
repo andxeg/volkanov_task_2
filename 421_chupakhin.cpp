@@ -232,7 +232,7 @@ class Procedure {
 public:
     Procedure() {}
     ~Procedure() {}
-    virtual int execute(State & curr_state, const int & currComm) const = 0;
+    virtual int execute(State & curr_state, const int & currComm, Action & action, int curr) const = 0;
 };
 
 class F: public Procedure {
