@@ -205,7 +205,7 @@ public:
     int next;
     std::string operation;
     Action() :
-            currState(), nextState(), curr(0), next(0), operation()
+            currState(), nextState(), curr(-1), next(-1), operation()
     {};
 
     ~Action() {};
@@ -214,7 +214,7 @@ public:
         std::string color = std::string("blue");
         if ( nextState.c_f > currState.c_f )
             color = std::string("red");
-        out << curr << " -> " << next << "[label=\"" << operation << " " <<
+        out << curr << " -> " << next << " " << "[label=\"" << operation << "\""<< " " <<
         "color=\"" << color << "\"];" << std::endl;
     }
 
@@ -538,13 +538,34 @@ void addStateAndAction(std::vector<State> & states, const State & state, std::ve
 
 }
 
-int stateIndex( std::vector<State> & states, State & state ) {
-    int result = 0;
-    for ( uint i = 0; i < states.size(); i++) {
-        if ( states[i] == state )
-            result = i;
+void addState(std::vector<State> & states, const State & state) {
+    uint size = states.size();
+    int flag = 0;
+    for ( uint i = 0; i < size; i++ ) {
+        if ( states[i] == state ) {
+            flag = 1;
             break;
+        }
     }
+
+    if ( !flag )
+        states.push_back(state);
+}
+
+int stateIndex( std::vector<State> & states, const State & state ) {
+    int result = -1;
+    uint size = states.size();
+
+    for ( uint i = 0; i < size; i++ ) {
+        //std::cout << "IN LOOP" << std::endl;
+        if ( states[i] == state ) {
+            //std::cout << "IN IF" << std::endl;
+            result = i;
+            //std::cout << "I -> " << i << std::endl;
+            break;
+        }
+    }
+
     return result;
 }
 
@@ -562,7 +583,7 @@ void implementTrace(const uint & trace, std::vector<State> & states, std::vector
     //Init state. All variables have unknown values. Only c_f == 0 and c_g == 0
     State state;
     Action action;
-    states.push_back(state);//add first initial state
+    addState(states,state);//add first initial state
     //
     while ( (one_count + null_count) < int(fLines + gLines) ) {
         //std::cout << one_count << " " << null_count << " " << int(fLines + gLines) << std::endl;
@@ -573,7 +594,10 @@ void implementTrace(const uint & trace, std::vector<State> & states, std::vector
         //print new state in execute method if string was implemented
         //make shift on (one_count + null_count) and take first bit
 
-        int currStateIndex = stateIndex(states, state);
+        int currStateIndex = 0;
+        if ( lts )
+            currStateIndex = stateIndex(states, state);
+//        int currStateIndex = stateIndex(states, state);
 
         if ( (trace >> (one_count + null_count)) & 1 ){
             if ( g.execute(state, one_count, action, currStateIndex) ) // {5}
@@ -639,6 +663,8 @@ int printLTS(std::vector<State> & states, std::vector<Action> & actions ) {
         states[i].printDOT(fout);
     }
 
+    fout << std::endl;
+
     for ( uint i = 0; i < actions.size(); i++ ) {
         actions[i].printDOT(fout);
     }
@@ -682,11 +708,15 @@ bool checkFlag(const char * flag, char ** argv, int argc, int & position) {
             std::cout << "-count exist" << std::endl;
             break;
         } else if ( ( strcmp("-file\0", flag) == 0 ) && ( i < ( argc - 1 ) ) ) { //check -file flag after this flag must stand <filename>
+            if ( strcmp("-count\0", argv[i+1]) == 0  || strcmp("-lts\0", argv[i+1]) == 0 || strcmp("-file\0", argv[i+1]) == 0 )
+                break;
             position = i;
             exist = true;
             std::cout << "-file exist" << std::endl;
             break;
         } else if ( ( strcmp("-lts\0", flag) == 0 ) && ( i < ( argc - 1 ) ) ) { //check -lts flag after this flag must stand <filename>
+            if ( strcmp("-count\0", argv[i+1]) == 0  || strcmp("-file\0", argv[i+1]) == 0 || strcmp("-lts\0", argv[i+1]) == 0)
+                break;
             position = i;
             exist = true;
             std::cout << "-lts exist" << std::endl;
