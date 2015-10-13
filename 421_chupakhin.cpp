@@ -18,8 +18,12 @@
 #include <string.h>
 #include <fstream>
 
+//#define fLines 9
+//#define gLines 13
+
 #define fLines 9
 #define gLines 13
+
 
 //GLOBAL VARIABLES -> <FILENAME< <INPUT PARAMETERS FOR PROCEDURE F AND G> <COUNT FLAG>
 //F_Procedure line - {0}, G_Procedure line - {1}
@@ -47,7 +51,7 @@ void initPathes() {
 int correctTrace( const uint & trace ) {
     //Trace is correct if weight == gLines and length == (fLines + gLines)
     char ones = 0;
-    for (uint i = 0; i < (fLines + gLines); i++){
+    for (uint i = 0; i < (fLines + gLines); i++) {
         if ( (trace >> i) & 1 )
             ones += 1;
     }
@@ -143,6 +147,11 @@ public:
         h = right.h;
         c_f = right.c_f;
         c_g = right.c_g;
+        init[0] = right.init[0];
+        init[1] = right.init[1];
+        init[2] = right.init[2];
+        init[3] = right.init[3];
+        init[4] = right.init[4];
         return *this;
     }
 
@@ -212,18 +221,18 @@ public:
 
     void printDOT( std::ofstream & out) {
         std::string color = std::string("blue");
-        if ( nextState.c_f > currState.c_f )
+        if ( nextState.c_f != currState.c_f )
             color = std::string("red");
         out << curr << " -> " << next << " " << "[label=\"" << operation << "\""<< " " <<
         "color=\"" << color << "\"];" << std::endl;
     }
 
     bool operator==( const Action & right ) {
-        return ( currState == right.currState &&
-                nextState == right.nextState &&
-                curr == right.curr &&
-                next == right.next &&
-                operation == right.operation );
+        return ( ( currState == right.currState ) &&
+                ( nextState == right.nextState ) &&
+                ( curr == right.curr ) &&
+                ( next == right.next ) &&
+                ( operation == right.operation ) );
     }
 
 };
@@ -327,16 +336,17 @@ public:
                 action.nextState = curr_state;
                 break;
 
-            case  8:
+//            case  8:
                 //end of the procedure
-                //Infinite loop in last state
-                action.operation = std::string("END");
-                action.nextState = curr_state;
-                action.next = curr;
-                break;
+
+                //action.operation = std::string("END");
+                //action.nextState = curr_state;
+                //action.next = curr;
+//                break;
 
             default:
-                std::cout <<  "Not found appropriate command" << std::endl;
+                //std::cout <<  "Not found appropriate command" << std::endl;
+                return 0;
                 break;
         }
 
@@ -477,16 +487,18 @@ public:
                 action.nextState = curr_state;
                 break;
 
-            case  12:
+//            case  12:
                 //end of the procedure
-                //Infinite loop in last state
-                action.operation = std::string("END");
-                action.nextState = curr_state;
-                action.next = curr;
-                break;
+
+//                action.operation = std::string("END");
+//                action.nextState = curr_state;
+//                action.next = curr;
+
+//                break;
 
             default:
-                std::cout <<  "Not found appropriate command" << std::endl;
+                //std::cout <<  "Not found appropriate command" << std::endl;
+                return 0;
                 break;
         }
 
@@ -516,12 +528,16 @@ void addStateAndAction(std::vector<State> & states, const State & state, std::ve
     //
 
     //If lts flag is not exist then not work with action
-    if ( !lts )
+    if ( !lts ) {
+        std::cout <<  "-lts is not exist in ADDStateAndAction" << std::endl;
         return;
+    }
     //
 
 
     action.next = index;
+
+    flag = 0;
 
     //CHECK ACTION
     size = actions.size();
@@ -585,7 +601,9 @@ void implementTrace(const uint & trace, std::vector<State> & states, std::vector
     Action action;
     addState(states,state);//add first initial state
     //
-    while ( (one_count + null_count) < int(fLines + gLines) ) {
+
+    while ( (one_count + null_count) < int(fLines + gLines ) ) {
+    //while ( one_count < int(gLines) || null_count < int(fLines) ) {
         //std::cout << one_count << " " << null_count << " " << int(fLines + gLines) << std::endl;
 
         //take bit with number == ( one_count + null_count)
@@ -594,19 +612,29 @@ void implementTrace(const uint & trace, std::vector<State> & states, std::vector
         //print new state in execute method if string was implemented
         //make shift on (one_count + null_count) and take first bit
 
+        //Сброс линка
+//        action.currState = State();
+//        action.nextState = State();
+//        action.curr = -1;
+//        action.next = -1;
+//        action.operation = std::string("");
+        //
+
         int currStateIndex = 0;
         if ( lts )
             currStateIndex = stateIndex(states, state);
 //        int currStateIndex = stateIndex(states, state);
 
-        if ( (trace >> (one_count + null_count)) & 1 ){
+        if ( (trace >> (one_count + null_count)) & 1 ) {
             if ( g.execute(state, one_count, action, currStateIndex) ) // {5}
                 addStateAndAction(states, state, actions, action);
             one_count += 1;
+            //std::cout << "one_count -> " << one_count<< std::endl;
         } else {
             if ( f.execute(state, null_count, action, currStateIndex) ) // {6}
                 addStateAndAction(states, state, actions, action);
             null_count += 1;
+            //std::cout << "null_count -> "  << null_count<< std::endl;
         }
     }
 }
@@ -793,11 +821,23 @@ int main( int argc, char **argv ) {
     initPathes();
     std::vector<State> states;
     std::vector<Action> actions;
+
+    //!!!!!!!!!!!!
+    uint PATH1 = 4177951; //1111111100000000011111
+    uint PATH2 = 16382; //0000000011111111111110
+    uint PATH3 = 32764; //0000000111111111111100
+
     //
-    for ( uint trace = START_PATH; trace <= /*END_PATH_NEW*/END_PATH; trace++ ) {
+
+    for ( uint trace = /*END_PATH*/START_PATH; trace <= /*END_PATH_NEW*/END_PATH; trace++ ) {
         if ( !correctTrace(trace) )
             continue;
         //printTrace( trace );
+//        if ( trace != START_PATH /*&& trace != END_PATH &&  trace != PATH1 */ && trace != PATH2)
+//                continue;
+//        if ( trace != PATH1)
+//            continue;
+
         implementTrace(trace, states, actions); // {2}
     }
 
